@@ -1,10 +1,13 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using UsersService.Core.Domain.Entities;
+using UsersService.Core.Domain.RepositoryContracts;
 using UsersService.Infrastructure.DBContext;
+using UsersService.Infrastructure.Repositories;
+using UsersService.Infrastructure.Seeders;
 
 namespace UsersService.Infrastructure
 {
@@ -31,7 +34,16 @@ namespace UsersService.Infrastructure
              .AddEntityFrameworkStores<ApplicationDbContext>()
              .AddDefaultTokenProviders();
 
+            services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+            services.AddScoped<IAddressRepository, AddressRepository>();
+
             return services;
+        }
+
+        public static async Task SeedDatabaseAsync(this IServiceProvider serviceProvider, IConfiguration configuration)
+        {
+            using var scope = serviceProvider.CreateScope();
+            await AdminSeeder.SeedAdminAsync(scope.ServiceProvider, configuration);
         }
     }
 }
