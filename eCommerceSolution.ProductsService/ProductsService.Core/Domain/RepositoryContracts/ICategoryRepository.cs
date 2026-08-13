@@ -1,13 +1,17 @@
-﻿using ProductsService.Core.Domain.Entities;
+using ProductsService.Core.Domain.Entities;
 
 namespace ProductsService.Core.Domain.RepositoryContracts
 {
     public interface ICategoryRepository
     {
-        Task<Category> AddCategory(Category category);
-        Task<List<Category>> GetActiveCategories();
-        Task<List<Category>> GetAllCategoriesForAdmin();
-        Task<Category?> GetCategoryById(Guid categoryId);
-        Task<bool> IsCategoryExist(Guid categoryId);
+        Task<Category> AddCategoryAsync(Category category);
+        Task<List<Category>> GetCategoriesAsync();
+        Task<List<Category>> GetCategoriesAdminAsync();
+        Task<Category?> GetCategoryByIdAsync(Guid categoryId);
+        Task<Category?> GetCategoryByIdAdminAsync(Guid categoryId);
+        Task<bool> IsCategoryExistAsync(Guid categoryId);
+        Task<bool> IsCategoryNameExistAsync(string categoryName, Guid? excludeCategoryId = null);
+        Task<Category> UpdateCategoryAsync(Category category);
+        Task<bool> UpdateCategoryStatusAsync(Guid categoryId, bool isActive);
     }
 }

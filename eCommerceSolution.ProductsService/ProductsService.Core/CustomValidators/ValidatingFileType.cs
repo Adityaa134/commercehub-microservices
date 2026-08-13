@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Http;
 
 namespace ProductsService.Core.CustomValidators
@@ -20,7 +20,7 @@ namespace ProductsService.Core.CustomValidators
             {
                 if(IsNewProduct(validationContext) && _isRequiredForNewImage)
                 {
-                    return new ValidationResult("Dish image is required for new products");
+                    return new ValidationResult("Image is required");
                 }
                 return ValidationResult.Success;
 

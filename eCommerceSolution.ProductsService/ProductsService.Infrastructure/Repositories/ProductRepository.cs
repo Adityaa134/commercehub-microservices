@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ProductsService.Core.Domain.Entities;
 using ProductsService.Core.Domain.RepositoryContracts;
 using ProductsService.Infrastructure.DBContext;
@@ -8,41 +8,64 @@ namespace ProductsService.Infrastructure.Repositories
     public class ProductRepository : IProductRepository
     {
         private readonly ApplicationDbContext _dbContext;
+
         public ProductRepository(ApplicationDbContext dbContext)
         {
             _dbContext = dbContext;
         }
 
-        public async Task<Product> AddProduct(Product product)
+        public async Task<Product> AddProductAsync(Product product)
         {
             await _dbContext.Products.AddAsync(product);
             await _dbContext.SaveChangesAsync();
             return product;
         }
 
-        public async Task<Product?> GetProductById(Guid productId)
+        public async Task<Product?> GetProductByIdAsync(Guid productId)
         {
             return await _dbContext.Products
-                                   .FirstOrDefaultAsync(t=>t.Id == productId);
+                .Include(p => p.Category)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.Id == productId && p.IsActive && p.Category.IsActive);
         }
 
-        public async Task<bool> IsProductExist(Guid productId)
+        public async Task<Product?> GetProductByIdAdminAsync(Guid productId)
         {
             return await _dbContext.Products
-                                   .AnyAsync(t=>t.Id == productId);
+                .Include(p => p.Category)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.Id == productId);
         }
 
-        public async Task<Product> UpdateProduct(Product product)
+        public async Task<bool> IsProductExistAsync(Guid productId)
         {
-            var matchingProduct = await GetProductById(product.Id);
-            matchingProduct.Description = product.Description;
-            matchingProduct.Name = product.Name;
-            matchingProduct.UnitPrice = product.UnitPrice;
-            matchingProduct.ProductImagePath = product.ProductImagePath;
-            matchingProduct.QuantityInStock = product.QuantityInStock;
+            return await _dbContext.Products.AnyAsync(p => p.Id == productId);
+        }
 
+        public async Task<bool> IsProductNameExistAsync(string productName, Guid? excludeProductId = null)
+        {
+            string name = productName.Trim().ToLower();
+            return await _dbContext.Products
+                .AnyAsync(p => p.Name.ToLower() == name && (!excludeProductId.HasValue || p.Id != excludeProductId.Value));
+        }
+
+        public async Task<Product> UpdateProductAsync(Product product)
+        {
+            _dbContext.Products.Update(product);
             await _dbContext.SaveChangesAsync();
-            return matchingProduct;
+            return product;
+        }
+
+        public async Task<bool> UpdateProductStatusAsync(Guid productId, bool isActive)
+        {
+            Product? product = await _dbContext.Products.FirstOrDefaultAsync(p => p.Id == productId);
+            if (product == null)
+                return false;
+
+            product.IsActive = isActive;
+            _dbContext.Products.Update(product);
+            await _dbContext.SaveChangesAsync();
+            return true;
         }
     }
 }
