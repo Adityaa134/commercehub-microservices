@@ -7,7 +7,7 @@ namespace ProductsService.Core.DTO
         [Required(ErrorMessage = "Product Id is required")]
         public Guid ProductId { get; set; }
 
-        [Range(1, 100, ErrorMessage = "Quantity must be between 1 and 100")]
+        [Range(1, 5, ErrorMessage = "Quantity must be between 1 and 5")]
         public int Quantity { get; set; } = 1;
     }
 }

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using ProductsService.Core.Domain.Entities;
 using ProductsService.Core.Domain.RepositoryContracts;
+using ProductsService.Core.DTO;
 using ProductsService.Infrastructure.DBContext;
 
 namespace ProductsService.Infrastructure.Repositories
@@ -66,6 +67,23 @@ namespace ProductsService.Infrastructure.Repositories
             _dbContext.Products.Update(product);
             await _dbContext.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<List<ProductBatchResponse>> GetProductsByIdsAsync(List<Guid> productIds)
+        {
+            return await _dbContext.Products
+                .AsNoTracking()
+                .Where(p => productIds.Contains(p.Id) && p.IsActive && p.Category.IsActive)
+                .Select(p => new ProductBatchResponse
+                {
+                    ProductId = p.Id,
+                    ProductName = p.Name,
+                    ProductImageUrl = p.ProductImagePath,
+                    UnitPrice = p.UnitPrice,
+                    QuantityInStock = p.QuantityInStock,
+                    IsActive = p.IsActive
+                })
+                .ToListAsync();
         }
     }
 }

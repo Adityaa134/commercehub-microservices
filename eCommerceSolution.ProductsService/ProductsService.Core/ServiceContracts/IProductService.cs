@@ -7,6 +7,7 @@ namespace ProductsService.Core.ServiceContracts
         Task<ProductResponse> AddProductAsync(ProductAddRequest productAddRequest);
         Task<ProductResponse> GetProductByIdAsync(Guid productId);
         Task<ProductResponse> GetProductByIdAdminAsync(Guid productId);
+        Task<List<ProductBatchResponse>> GetProductsByIdsAsync(List<Guid> productIds);
         Task<ProductResponse> UpdateProductAsync(Guid productId, ProductUpdateRequest request);
         Task<ProductResponse> UpdateProductStatusAsync(Guid productId, bool isActive);
         Task<bool> IsProductExistAsync(Guid productId);

@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Org.BouncyCastle.Pqc.Crypto.Lms;
 using UsersService.Core.Domain.Entities;
 using UsersService.Core.DTO;
 using UsersService.Core.Exceptions;

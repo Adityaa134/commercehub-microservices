@@ -6,7 +6,7 @@ using ProductsService.Core.ServiceContracts;
 
 namespace ProductsMicroService.API.Controllers
 {
-    [Authorize(Roles = Roles.Admin)]
+    [Authorize]
     public class ProductController : BaseController
     {
         private readonly IProductService _productService;
@@ -25,6 +25,7 @@ namespace ProductsMicroService.API.Controllers
         }
 
         [HttpGet("admin/{productId:guid}")]
+        [Authorize(Roles = Roles.Admin)]
         public async Task<ActionResult<ProductResponse>> GetProductByIdAdmin(Guid productId)
         {
             ProductResponse productResponse = await _productService.GetProductByIdAdminAsync(productId);
@@ -32,6 +33,7 @@ namespace ProductsMicroService.API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = Roles.Admin)]
         [Consumes("multipart/form-data")]
         public async Task<ActionResult<ProductResponse>> AddProduct([FromForm] ProductAddRequest productAddRequest)
         {
@@ -40,6 +42,7 @@ namespace ProductsMicroService.API.Controllers
         }
 
         [HttpPut("{productId:guid}")]
+        [Authorize(Roles = Roles.Admin)]
         [Consumes("multipart/form-data")]
         public async Task<ActionResult<ProductResponse>> UpdateProduct(Guid productId, [FromForm] ProductUpdateRequest productUpdateRequest)
         {
@@ -48,10 +51,18 @@ namespace ProductsMicroService.API.Controllers
         }
 
         [HttpPatch("{productId:guid}/status")]
-        public async Task<ActionResult<ProductResponse>> UpdateProductStatus(Guid productId,ProductStatusUpdateRequest request)
+        [Authorize(Roles = Roles.Admin)]
+        public async Task<ActionResult<ProductResponse>> UpdateProductStatus(Guid productId, ProductStatusUpdateRequest request)
         {
             ProductResponse productResponse = await _productService.UpdateProductStatusAsync(productId, request.IsActive);
             return Ok(productResponse);
+        }
+
+        [HttpPost("batch")]
+        public async Task<ActionResult<List<ProductBatchResponse>>> GetProductsByIds(List<Guid> productIds)
+        {
+            List<ProductBatchResponse> products = await _productService.GetProductsByIdsAsync(productIds);
+            return Ok(products);
         }
     }
 }

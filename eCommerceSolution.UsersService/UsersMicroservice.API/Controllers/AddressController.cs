@@ -6,11 +6,11 @@ using UsersService.Core.ServiceContracts;
 namespace UsersMicroservice.API.Controllers
 {
     [Authorize]
-    public class AddressesController : BaseController
+    public class AddressController : BaseController
     {
         private readonly IAddressService _addressService;
 
-        public AddressesController(IAddressService addressService)
+        public AddressController(IAddressService addressService)
         {
             _addressService = addressService;
         }
@@ -20,7 +20,7 @@ namespace UsersMicroservice.API.Controllers
         {
             Guid userId = GetUserId();
             AddressResponse response = await _addressService.AddAddressAsync(userId, request);
-            return CreatedAtAction(nameof(GetAddressById), new { addressId = response.Id }, response);
+            return CreatedAtAction(nameof(GetAddressById), new { addressId = response.AddressId }, response);
         }
 
         [HttpGet]

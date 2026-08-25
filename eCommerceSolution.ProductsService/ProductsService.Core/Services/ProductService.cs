@@ -156,5 +156,20 @@ namespace ProductsService.Core.Services
 
             return await _productRepository.IsProductExistAsync(productId);
         }
+
+        public async Task<List<ProductBatchResponse>> GetProductsByIdsAsync(List<Guid> productIds)
+        {
+            if (productIds == null || productIds.Count == 0)
+                throw new BusinessValidationException("At least one ProductId must be provided.");
+
+            List<ProductBatchResponse> products = await _productRepository.GetProductsByIdsAsync(productIds);
+
+            foreach (ProductBatchResponse product in products)
+            {
+                product.ProductImageUrl = _imageService.GetImageUrl(BlobContainers.ProductImages, product.ProductImageUrl);
+            }
+
+            return products;
+        }
     }
 }

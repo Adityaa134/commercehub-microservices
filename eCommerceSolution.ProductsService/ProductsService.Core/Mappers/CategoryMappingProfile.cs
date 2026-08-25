@@ -9,10 +9,6 @@ namespace ProductsService.Core.Mappers
         public CategoryMappingProfile()
         {
             CreateMap<CategoryAddRequest, Category>()
-                .ForMember(dest => dest.Id, opt => opt.Ignore())
-                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
-                .ForMember(dest => dest.CategoryImagePath, opt => opt.Ignore())
-                .ForMember(dest => dest.Products, opt => opt.Ignore())
                 .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.CategoryName));
 
             CreateMap<Category, CategoryResponse>()
