@@ -4,16 +4,12 @@ namespace OrdersService.Core.DTO
 {
     public class OrderAddRequest
     {
-        [Required(ErrorMessage = "UserId is required")]
-        public Guid UserId { get; set; }
 
         [Required(ErrorMessage = "AddressId is required")]
         public Guid AddressId { get; set; }
 
-        [Required(ErrorMessage = "OrderDate is required")]
-        public DateTime OrderDate { get; set; }
-
         [Required(ErrorMessage = "OrderItems is required")]
+        [MinLength(1, ErrorMessage = "Order must contain at least one item")]
         public List<OrderItemAddRequest> OrderItems { get; set; }
     }
 }
