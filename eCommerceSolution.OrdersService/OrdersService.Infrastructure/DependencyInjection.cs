@@ -6,6 +6,7 @@ using OrdersService.Infrastructure.HttpClients;
 using OrdersService.Infrastructure.Repositories;
 using OrdersService.Infrastructure.DBContext;
 using Microsoft.EntityFrameworkCore;
+using OrdersService.Infrastructure.Policies;
 
 namespace OrdersService.Infrastructure
 {
@@ -24,19 +25,23 @@ namespace OrdersService.Infrastructure
 
             services.AddTransient<BearerTokenPropagationHandler>();
 
+            services.AddSingleton<PollyPolicies>();
+
             services.AddHttpClient<IUserServiceClient, UserServiceClient>(client =>
             {
                 client.BaseAddress = new Uri(
                     configuration["UserService:BaseUrl"]!);
             })
-            .AddHttpMessageHandler<BearerTokenPropagationHandler>();
+            .AddHttpMessageHandler<BearerTokenPropagationHandler>()
+            .AddPolicyHandler((sp,_)=> sp.GetRequiredService<PollyPolicies>().GetCombinedPolicy("UserService"));
 
             services.AddHttpClient<IProductServiceClient, ProductServiceClient>(client =>
             {
                 client.BaseAddress = new Uri(
                     configuration["ProductService:BaseUrl"]!);
             })
-            .AddHttpMessageHandler<BearerTokenPropagationHandler>();
+            .AddHttpMessageHandler<BearerTokenPropagationHandler>()
+            .AddPolicyHandler((sp, _) => sp.GetRequiredService<PollyPolicies>().GetCombinedPolicy("ProductService"));
 
             return services;
         }

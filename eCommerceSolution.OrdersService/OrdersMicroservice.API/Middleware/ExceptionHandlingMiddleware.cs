@@ -51,6 +51,18 @@ namespace OrdersMicroservice.API.Middleware
                         message = validationEx.Message;
                         break;
 
+                    case ServiceUnavailableException:
+                        statusCode = StatusCodes.Status503ServiceUnavailable;
+                        title = "Service Unavailable";
+                        message = "The service is temporarily unavailable. Please try again in a few moments.";
+                        break;
+
+                    case DownstreamTimeoutException:
+                        statusCode = StatusCodes.Status504GatewayTimeout;
+                        title = "Request Timeout";
+                        message = "The request took too long to complete. Please try again.";
+                        break;
+
                     default:
                         statusCode = StatusCodes.Status500InternalServerError;
                         title = "Internal Server Error";
@@ -58,7 +70,7 @@ namespace OrdersMicroservice.API.Middleware
                         break;
                 }
 
-                if (statusCode == StatusCodes.Status500InternalServerError || ex.InnerException != null)
+                if (statusCode >= StatusCodes.Status500InternalServerError || ex.InnerException != null)
                 {
                     _logger.LogError(ex, "Server Error ({StatusCode}): {Message}. InnerException: {InnerMessage}",
                         statusCode, ex.Message, ex.InnerException?.Message);

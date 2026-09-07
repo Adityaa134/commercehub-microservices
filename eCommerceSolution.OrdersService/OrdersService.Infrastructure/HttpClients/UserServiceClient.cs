@@ -1,7 +1,10 @@
 using System.Net;
 using System.Net.Http.Json;
 using OrdersService.Core.DTO;
+using OrdersService.Core.Exceptions;
 using OrdersService.Core.ServiceContracts;
+using Polly.CircuitBreaker;
+using Polly.Timeout;
 
 namespace OrdersService.Infrastructure.HttpClients
 {
@@ -16,14 +19,29 @@ namespace OrdersService.Infrastructure.HttpClients
 
         public async Task<AddressResponse?> GetAddressByIdAsync(Guid addressId)
         {
-            HttpResponseMessage response = await _httpClient.GetAsync($"api/Address/{addressId}");
+            try
+            {
+                HttpResponseMessage response = await _httpClient.GetAsync($"api/Address/{addressId}");
 
-            if (response.StatusCode == HttpStatusCode.NotFound)
-                return null;
+                if (response.StatusCode == HttpStatusCode.NotFound)
+                    return null;
 
-            response.EnsureSuccessStatusCode();
+                response.EnsureSuccessStatusCode();
 
-            return await response.Content.ReadFromJsonAsync<AddressResponse>();
+                return await response.Content.ReadFromJsonAsync<AddressResponse>();
+            }
+            catch (HttpRequestException ex)
+            {
+                throw new ServiceUnavailableException("User Service is unreachable.", ex);
+            }
+            catch (BrokenCircuitException ex)
+            {
+                throw new ServiceUnavailableException("User Service is temporarily unavailable.", ex);
+            }
+            catch (TimeoutRejectedException ex)
+            {
+                throw new DownstreamTimeoutException("User Service request timed out.", ex);
+            }
         }
     }
 }
