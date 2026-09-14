@@ -13,6 +13,8 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["ProductsMicroService.API/ProductsMicroService.API.csproj", "ProductsMicroService.API/"]
+COPY ["ProductsService.Core/ProductsService.Core.csproj", "ProductsService.Core/"]
+COPY ["ProductsService.Infrastructure/ProductsService.Infrastructure.csproj", "ProductsService.Infrastructure/"]
 RUN dotnet restore "./ProductsMicroService.API/ProductsMicroService.API.csproj"
 COPY . .
 WORKDIR "/src/ProductsMicroService.API"

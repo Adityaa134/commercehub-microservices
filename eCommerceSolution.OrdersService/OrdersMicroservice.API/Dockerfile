@@ -13,6 +13,8 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["OrdersMicroservice.API/OrdersMicroservice.API.csproj", "OrdersMicroservice.API/"]
+COPY ["OrdersService.Core/OrdersService.Core.csproj", "OrdersService.Core/"]
+COPY ["OrdersService.Infrastructure/OrdersService.Infrastructure.csproj", "OrdersService.Infrastructure/"]
 RUN dotnet restore "./OrdersMicroservice.API/OrdersMicroservice.API.csproj"
 COPY . .
 WORKDIR "/src/OrdersMicroservice.API"

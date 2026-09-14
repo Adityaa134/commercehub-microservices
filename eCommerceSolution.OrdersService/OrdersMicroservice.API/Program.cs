@@ -1,14 +1,16 @@
 using System.Text;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Serilog;
-using OrdersService.Infrastructure;
-using OrdersService.Core;
-using System.Text.Json.Serialization;
 using OrdersMicroservice.API.Middleware;
+using OrdersService.Core;
+using OrdersService.Infrastructure;
+using OrdersService.Infrastructure.DBContext;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -68,6 +70,15 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    if (app.Environment.IsDevelopment())
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        await dbContext.Database.MigrateAsync();
+    }
+}
 
 app.UseSerilogRequestLogging();
 
