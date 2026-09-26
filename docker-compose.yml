@@ -6,8 +6,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    ports:
-      - "5433:5432"
     volumes:
       - users_db_data:/var/lib/postgresql
     networks:
@@ -19,8 +17,6 @@ services:
     environment:
       ACCEPT_EULA: "Y"
       MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
-    ports:
-      - "1433:1433"
     volumes:
       - products_db_data:/var/opt/mssql
     networks:
@@ -32,8 +28,6 @@ services:
     environment:
       ACCEPT_EULA: "Y"
       MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
-    ports:
-      - "1434:1433"
     volumes:
       - orders_db_data:/var/opt/mssql
     networks:
@@ -79,8 +73,6 @@ services:
       - AuthSettings__EmailConfirmationUrl=${AUTH_EMAIL_CONFIRMATION_URL}
       - AuthSettings__PasswordResetUrl=${AUTH_PASSWORD_RESET_URL}
       - Serilog__WriteTo__1__Args__serverUrl=${SEQ_SERVER_URL}
-    ports:
-      - "7009:8080"
     depends_on:
       - users-db
       - seq
@@ -103,8 +95,6 @@ services:
       - Jwt__ExpirationTime=${JWT_EXPIRATION_TIME}
       - BlobStorage__ConnectionString=${BLOB_STORAGE_CONNECTION_STRING}
       - Serilog__WriteTo__1__Args__serverUrl=${SEQ_SERVER_URL}
-    ports:
-      - "7277:8080"
     depends_on:
       - products-db
       - seq
@@ -128,8 +118,6 @@ services:
       - UserService__BaseUrl=http://users-service:8080/
       - ProductService__BaseUrl=http://products-service:8080/
       - Serilog__WriteTo__1__Args__serverUrl=${SEQ_SERVER_URL}
-    ports:
-      - "7010:8080"
     depends_on:
       - orders-db
       - users-service
@@ -137,6 +125,23 @@ services:
       - seq
     networks:
       - orders-service-network
+      - ecommerce-network
+
+  api-gateway:
+    build:
+      context: ./eCommerceSolution.ApiGateway
+      dockerfile: eCommerceSolution.ApiGateway/Dockerfile
+    container_name: api-gateway
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
+    ports:
+      - "5000:8080"
+    depends_on:
+      - users-service
+      - products-service
+      - orders-service
+    networks:
       - ecommerce-network
 
 volumes:
