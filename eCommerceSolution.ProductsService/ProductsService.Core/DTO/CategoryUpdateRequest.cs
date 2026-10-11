@@ -14,6 +14,8 @@ namespace ProductsService.Core.DTO
         [StringLength(500, ErrorMessage = "Description cannot exceed 500 characters")]
         public string Description { get; set; } = string.Empty;
 
+        public Guid? ParentCategoryId { get; set; }
+
         [ValidatingFileType(isRequiredForNewImage: false)]
         public IFormFile? CategoryImage { get; set; }
     }

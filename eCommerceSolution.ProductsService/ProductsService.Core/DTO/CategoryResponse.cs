@@ -7,5 +7,8 @@ namespace ProductsService.Core.DTO
         public string Description { get; set; } = string.Empty;
         public string CategoryImagePath { get; set; } = string.Empty;
         public bool IsActive { get; set; }
+        public Guid? ParentCategoryId { get; set; }
+        public int DisplayOrder { get; set; }
+        public List<CategoryResponse> SubCategories { get; set; } = new List<CategoryResponse>();
     }
 }

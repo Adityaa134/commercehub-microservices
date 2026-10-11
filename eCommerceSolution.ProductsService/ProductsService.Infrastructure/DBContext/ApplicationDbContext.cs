@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ProductsService.Core.Domain.Entities;
 
 namespace ProductsService.Infrastructure.DBContext
@@ -30,6 +30,13 @@ namespace ProductsService.Infrastructure.DBContext
                 catgeory.ToTable("Categories");
                 catgeory.HasIndex(c => c.Name)
                         .IsUnique();
+                catgeory.Property(c => c.DisplayOrder)
+                        .HasDefaultValue(0);
+                catgeory.HasOne(c => c.ParentCategory)
+                        .WithMany(c => c.SubCategories)
+                        .HasForeignKey(c => c.ParentCategoryId)
+                        .OnDelete(DeleteBehavior.Restrict);
+                catgeory.HasIndex(c => c.ParentCategoryId);
             });
 
             modelBuilder.Entity<Cart>(cart =>

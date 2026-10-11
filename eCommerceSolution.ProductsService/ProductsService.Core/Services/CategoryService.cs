@@ -27,41 +27,58 @@ namespace ProductsService.Core.Services
             if (isNameDuplicate)
                 throw new ConflictException("A category with this name already exists.");
 
+            if (categoryAddRequest.ParentCategoryId != null)
+            {
+                bool parentExists = await _categoryRepository.IsCategoryExistAsync(categoryAddRequest.ParentCategoryId.Value);
+                if (!parentExists)
+                    throw new NotFoundException("Parent category does not exist.");
+            }
+
             Category category = _mapper.Map<CategoryAddRequest, Category>(categoryAddRequest);
 
-            string originalName = Path.GetFileNameWithoutExtension(categoryAddRequest.CategoryImage.FileName).Trim().Replace(" ", "-");
-            string extension = Path.GetExtension(categoryAddRequest.CategoryImage.FileName);
-            string fileName = $"{originalName}-{Guid.NewGuid()}{extension}";
+            if (categoryAddRequest.CategoryImage != null && categoryAddRequest.CategoryImage.Length > 0)
+            {
+                string originalName = Path.GetFileNameWithoutExtension(categoryAddRequest.CategoryImage.FileName).Trim().Replace(" ", "-");
+                string extension = Path.GetExtension(categoryAddRequest.CategoryImage.FileName);
+                string fileName = $"{originalName}-{Guid.NewGuid()}{extension}";
 
-            using Stream stream = categoryAddRequest.CategoryImage.OpenReadStream();
-            string blobName = await _imageService.UploadImageAsync(stream, fileName, BlobContainers.CategoryImages);
-            category.CategoryImagePath = blobName;
+                using Stream stream = categoryAddRequest.CategoryImage.OpenReadStream();
+                string blobName = await _imageService.UploadImageAsync(stream, fileName, BlobContainers.CategoryImages);
+                category.CategoryImagePath = blobName;
+            }
 
             await _categoryRepository.AddCategoryAsync(category);
 
             CategoryResponse categoryResponse = _mapper.Map<Category, CategoryResponse>(category);
-            categoryResponse.CategoryImagePath = _imageService.GetImageUrl(BlobContainers.CategoryImages, categoryResponse.CategoryImagePath);
+            if (!string.IsNullOrEmpty(categoryResponse.CategoryImagePath))
+            {
+                categoryResponse.CategoryImagePath = _imageService.GetImageUrl(BlobContainers.CategoryImages, categoryResponse.CategoryImagePath);
+            }
             return categoryResponse;
         }
 
         public async Task<List<CategoryResponse>> GetCategoriesAsync()
         {
-            List<Category> categories = await _categoryRepository.GetCategoriesAsync();
-            List<CategoryResponse> categoryResponses = _mapper.Map<List<Category>, List<CategoryResponse>>(categories);
+            List<CategoryResponse> categoryResponses = await _categoryRepository.GetCategoriesAsync();
             foreach (CategoryResponse categoryResponse in categoryResponses)
             {
-                categoryResponse.CategoryImagePath = _imageService.GetImageUrl(BlobContainers.CategoryImages, categoryResponse.CategoryImagePath);
+                if (!string.IsNullOrEmpty(categoryResponse.CategoryImagePath))
+                {
+                    categoryResponse.CategoryImagePath = _imageService.GetImageUrl(BlobContainers.CategoryImages, categoryResponse.CategoryImagePath);
+                }
             }
             return categoryResponses;
         }
 
         public async Task<List<CategoryResponse>> GetCategoriesAdminAsync()
         {
-            List<Category> categories = await _categoryRepository.GetCategoriesAdminAsync();
-            List<CategoryResponse> categoryResponses = _mapper.Map<List<Category>, List<CategoryResponse>>(categories);
+            List<CategoryResponse> categoryResponses = await _categoryRepository.GetCategoriesAdminAsync();
             foreach (CategoryResponse categoryResponse in categoryResponses)
             {
-                categoryResponse.CategoryImagePath = _imageService.GetImageUrl(BlobContainers.CategoryImages, categoryResponse.CategoryImagePath);
+                if (!string.IsNullOrEmpty(categoryResponse.CategoryImagePath))
+                {
+                    categoryResponse.CategoryImagePath = _imageService.GetImageUrl(BlobContainers.CategoryImages, categoryResponse.CategoryImagePath);
+                }
             }
             return categoryResponses;
         }
@@ -76,7 +93,10 @@ namespace ProductsService.Core.Services
                 throw new NotFoundException("Category not found.");
 
             CategoryResponse categoryResponse = _mapper.Map<Category, CategoryResponse>(category);
-            categoryResponse.CategoryImagePath = _imageService.GetImageUrl(BlobContainers.CategoryImages, categoryResponse.CategoryImagePath);
+            if (!string.IsNullOrEmpty(categoryResponse.CategoryImagePath))
+            {
+                categoryResponse.CategoryImagePath = _imageService.GetImageUrl(BlobContainers.CategoryImages, categoryResponse.CategoryImagePath);
+            }
             return categoryResponse;
         }
 
@@ -90,7 +110,10 @@ namespace ProductsService.Core.Services
                 throw new NotFoundException("Category not found.");
 
             CategoryResponse categoryResponse = _mapper.Map<Category, CategoryResponse>(category);
-            categoryResponse.CategoryImagePath = _imageService.GetImageUrl(BlobContainers.CategoryImages, categoryResponse.CategoryImagePath);
+            if (!string.IsNullOrEmpty(categoryResponse.CategoryImagePath))
+            {
+                categoryResponse.CategoryImagePath = _imageService.GetImageUrl(BlobContainers.CategoryImages, categoryResponse.CategoryImagePath);
+            }
             return categoryResponse;
         }
 
@@ -115,8 +138,24 @@ namespace ProductsService.Core.Services
             if (isNameDuplicate)
                 throw new ConflictException("A category with this name already exists.");
 
+            if (request.ParentCategoryId.HasValue)
+            {
+                if (request.ParentCategoryId.Value == categoryId)
+                    throw new BusinessValidationException("A category cannot be its own parent.");
+
+                bool parentExists = await _categoryRepository.IsCategoryExistAsync(request.ParentCategoryId.Value);
+                if (!parentExists)
+                    throw new NotFoundException("Parent category does not exist.");
+            }
+
+            if (!request.ParentCategoryId.HasValue && string.IsNullOrEmpty(category.CategoryImagePath) && (request.CategoryImage == null || request.CategoryImage.Length == 0))
+            {
+                throw new BusinessValidationException("Category image is required for parent categories.");
+            }
+
             category.Name = request.CategoryName;
             category.Description = request.Description;
+            category.ParentCategoryId = request.ParentCategoryId;
 
             if (request.CategoryImage != null && request.CategoryImage.Length > 0)
             {
@@ -125,13 +164,18 @@ namespace ProductsService.Core.Services
                 string newFileName = $"{originalName}-{Guid.NewGuid()}{extension}";
 
                 using Stream stream = request.CategoryImage.OpenReadStream();
-                string newBlobName = await _imageService.ReplaceImageAsync(stream, newFileName, category.CategoryImagePath, BlobContainers.CategoryImages);
+                string newBlobName = !string.IsNullOrEmpty(category.CategoryImagePath)
+                    ? await _imageService.ReplaceImageAsync(stream, newFileName, category.CategoryImagePath, BlobContainers.CategoryImages)
+                    : await _imageService.UploadImageAsync(stream, newFileName, BlobContainers.CategoryImages);
                 category.CategoryImagePath = newBlobName;
             }
 
             Category updatedCategory = await _categoryRepository.UpdateCategoryAsync(category);
             CategoryResponse categoryResponse = _mapper.Map<Category, CategoryResponse>(updatedCategory);
-            categoryResponse.CategoryImagePath = _imageService.GetImageUrl(BlobContainers.CategoryImages, categoryResponse.CategoryImagePath);
+            if (!string.IsNullOrEmpty(categoryResponse.CategoryImagePath))
+            {
+                categoryResponse.CategoryImagePath = _imageService.GetImageUrl(BlobContainers.CategoryImages, categoryResponse.CategoryImagePath);
+            }
             return categoryResponse;
         }
 
@@ -148,7 +192,10 @@ namespace ProductsService.Core.Services
             await _categoryRepository.UpdateCategoryStatusAsync(categoryId, isActive);
 
             CategoryResponse categoryResponse = _mapper.Map<Category, CategoryResponse>(category);
-            categoryResponse.CategoryImagePath = _imageService.GetImageUrl(BlobContainers.CategoryImages, categoryResponse.CategoryImagePath);
+            if (!string.IsNullOrEmpty(categoryResponse.CategoryImagePath))
+            {
+                categoryResponse.CategoryImagePath = _imageService.GetImageUrl(BlobContainers.CategoryImages, categoryResponse.CategoryImagePath);
+            }
             return categoryResponse;
         }
     }

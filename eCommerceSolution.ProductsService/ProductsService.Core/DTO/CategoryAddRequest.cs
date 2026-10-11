@@ -4,7 +4,7 @@ using ProductsService.Core.CustomValidators;
 
 namespace ProductsService.Core.DTO
 {
-    public class CategoryAddRequest
+    public class CategoryAddRequest : IValidatableObject
     {
         [Required(ErrorMessage = "Category Name is required")]
         [StringLength(200, ErrorMessage = "Category Name cannot exceed 200 characters")]
@@ -17,8 +17,20 @@ namespace ProductsService.Core.DTO
         [Required(ErrorMessage = "Category Status is required")]
         public bool IsActive { get; set; }
 
-        [Required(ErrorMessage = "Category Image is required")]
-        [ValidatingFileType]
-        public IFormFile CategoryImage { get; set; } = null!;
+        public Guid? ParentCategoryId { get; set; }
+
+        [ValidatingFileType(isRequiredForNewImage: false)]
+        public IFormFile? CategoryImage { get; set; }
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (ParentCategoryId == null && CategoryImage == null)
+            {
+                yield return new ValidationResult(
+                    "Category Image is required for parent categories.",
+                    new[] { nameof(CategoryImage) }
+                );
+            }
+        }
     }
 }

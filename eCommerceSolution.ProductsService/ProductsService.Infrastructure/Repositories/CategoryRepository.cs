@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using ProductsService.Core.Domain.Entities;
 using ProductsService.Core.Domain.RepositoryContracts;
+using ProductsService.Core.DTO;
 using ProductsService.Infrastructure.DBContext;
 
 namespace ProductsService.Infrastructure.Repositories
@@ -21,18 +22,64 @@ namespace ProductsService.Infrastructure.Repositories
             return category;
         }
 
-        public async Task<List<Category>> GetCategoriesAsync()
+        public async Task<List<CategoryResponse>> GetCategoriesAsync()
         {
             return await _dbContext.Categories
                 .AsNoTracking()
-                .Where(c => c.IsActive == true)
+                .Where(c => c.ParentCategoryId == null && c.IsActive)
+                .OrderBy(c => c.DisplayOrder)
+                .Select(parent => new CategoryResponse
+                {
+                    CategoryId = parent.Id,
+                    CategoryName = parent.Name,
+                    Description = parent.Description,
+                    CategoryImagePath = parent.CategoryImagePath,
+                    IsActive = parent.IsActive,
+                    ParentCategoryId = parent.ParentCategoryId,
+                    DisplayOrder = parent.DisplayOrder,
+                    SubCategories = parent.SubCategories
+                        .Where(sc => sc.IsActive)
+                        .OrderBy(sc => sc.DisplayOrder)
+                        .Select(sub => new CategoryResponse
+                        {
+                            CategoryId = sub.Id,
+                            CategoryName = sub.Name,
+                            Description = sub.Description,
+                            IsActive = sub.IsActive,
+                            ParentCategoryId = sub.ParentCategoryId,
+                            DisplayOrder = sub.DisplayOrder
+                        }).ToList()
+                })
                 .ToListAsync();
         }
 
-        public async Task<List<Category>> GetCategoriesAdminAsync()
+        public async Task<List<CategoryResponse>> GetCategoriesAdminAsync()
         {
             return await _dbContext.Categories
                 .AsNoTracking()
+                .Where(c => c.ParentCategoryId == null)
+                .OrderBy(c => c.DisplayOrder)
+                .Select(parent => new CategoryResponse
+                {
+                    CategoryId = parent.Id,
+                    CategoryName = parent.Name,
+                    Description = parent.Description,
+                    CategoryImagePath = parent.CategoryImagePath,
+                    IsActive = parent.IsActive,
+                    ParentCategoryId = parent.ParentCategoryId,
+                    DisplayOrder = parent.DisplayOrder,
+                    SubCategories = parent.SubCategories
+                        .OrderBy(sc => sc.DisplayOrder)
+                        .Select(sub => new CategoryResponse
+                        {
+                            CategoryId = sub.Id,
+                            CategoryName = sub.Name,
+                            Description = sub.Description,
+                            IsActive = sub.IsActive,
+                            ParentCategoryId = sub.ParentCategoryId,
+                            DisplayOrder = sub.DisplayOrder
+                        }).ToList()
+                })
                 .ToListAsync();
         }
 

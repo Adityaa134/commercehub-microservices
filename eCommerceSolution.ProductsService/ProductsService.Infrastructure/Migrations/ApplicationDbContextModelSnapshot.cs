@@ -71,7 +71,6 @@ namespace ProductsService.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("CategoryImagePath")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedAt")
@@ -82,6 +81,11 @@ namespace ProductsService.Infrastructure.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<int>("DisplayOrder")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -90,10 +94,15 @@ namespace ProductsService.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<Guid?>("ParentCategoryId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Name")
                         .IsUnique();
+
+                    b.HasIndex("ParentCategoryId");
 
                     b.ToTable("Categories", (string)null);
                 });
@@ -202,6 +211,16 @@ namespace ProductsService.Infrastructure.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("ProductsService.Core.Domain.Entities.Category", b =>
+                {
+                    b.HasOne("ProductsService.Core.Domain.Entities.Category", "ParentCategory")
+                        .WithMany("SubCategories")
+                        .HasForeignKey("ParentCategoryId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("ParentCategory");
+                });
+
             modelBuilder.Entity("ProductsService.Core.Domain.Entities.Product", b =>
                 {
                     b.HasOne("ProductsService.Core.Domain.Entities.Category", "Category")
@@ -232,6 +251,8 @@ namespace ProductsService.Infrastructure.Migrations
             modelBuilder.Entity("ProductsService.Core.Domain.Entities.Category", b =>
                 {
                     b.Navigation("Products");
+
+                    b.Navigation("SubCategories");
                 });
 
             modelBuilder.Entity("ProductsService.Core.Domain.Entities.Product", b =>
