@@ -23,6 +23,10 @@ namespace ProductsService.Infrastructure.DBContext
             {
                 product.ToTable("Products");
                 product.HasIndex(p => p.Name);
+                product.HasIndex(p => new { p.CategoryId, p.IsActive });
+                product.HasIndex(p => new { p.IsActive, p.CreatedAt });
+                product.HasIndex(p => new { p.IsActive, p.UnitPrice });
+                product.HasIndex(p => new { p.IsActive, p.AverageRating, p.TotalRatings });
             });
 
             modelBuilder.Entity<Category>(catgeory =>

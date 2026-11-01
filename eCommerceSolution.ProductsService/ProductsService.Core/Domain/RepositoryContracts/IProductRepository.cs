@@ -13,5 +13,6 @@ namespace ProductsService.Core.Domain.RepositoryContracts
         Task<bool> IsProductNameExistAsync(string productName, Guid? excludeProductId = null);
         Task<Product> UpdateProductAsync(Product product);
         Task<bool> UpdateProductStatusAsync(Guid productId, bool isActive);
+        Task<(List<Product> Products, int TotalCount)> GetProductsAsync(ProductQueryParameters parameters);
     }
 }

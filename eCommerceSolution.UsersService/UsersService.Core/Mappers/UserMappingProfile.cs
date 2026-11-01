@@ -12,7 +12,7 @@ namespace UsersService.Core.Mappers
                 .ForMember(des => des.UserId, opt => opt.MapFrom(src => src.Id));
 
             CreateMap<RegisterRequest, ApplicationUser>()
-                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.FullName));
+                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.Email));
         }
     }
 }

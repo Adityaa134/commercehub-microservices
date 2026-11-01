@@ -74,7 +74,7 @@ namespace UsersService.Core.Services
             string encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
             string verificationLink = $"{_authSettings.EmailConfirmationUrl}?uid={newUser.Id}&token={encodedToken}";
            
-            await _emailService.SendEmailVerificationLinkAsync(newUser.Email!, newUser.UserName ?? newUser.Email!, verificationLink);
+            await _emailService.SendEmailVerificationLinkAsync(newUser.Email!, newUser.FullName, verificationLink);
 
             return new RegisterResponse()
             {
@@ -176,7 +176,7 @@ namespace UsersService.Core.Services
             string encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
             string verificationLink = $"{_authSettings.EmailConfirmationUrl}?uid={user.Id}&token={encodedToken}";
 
-            await _emailService.SendEmailVerificationLinkAsync(user.Email!, user.UserName ?? user.Email!, verificationLink);
+            await _emailService.SendEmailVerificationLinkAsync(user.Email!, user.FullName, verificationLink);
         }
 
         public async Task SendForgotPasswordEmailAsync(EmailRequest emailRequest)
@@ -194,7 +194,7 @@ namespace UsersService.Core.Services
             string encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(rawToken));
             string resetLink = $"{_authSettings.PasswordResetUrl}?email={Uri.EscapeDataString(user.Email!)}&token={encodedToken}";
 
-            await _emailService.SendPasswordResetLinkAsync(user.Email!, user.UserName ?? user.Email!, resetLink);
+            await _emailService.SendPasswordResetLinkAsync(user.Email!, user.FullName, resetLink);
         }
 
         public async Task ResetPasswordAsync(ResetPasswordRequest resetPasswordRequest)

@@ -47,7 +47,8 @@ namespace UsersService.Infrastructure.Seeders
                 {
                     Email = adminEmail,
                     UserName = adminEmail,
-                    EmailConfirmed = true
+                    EmailConfirmed = true,
+                    FullName = "Admin"
                 };
                 IdentityResult createResult = await userManager.CreateAsync(adminUser, adminPassword);
                 if (createResult.Succeeded)

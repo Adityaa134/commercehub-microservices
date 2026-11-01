@@ -171,5 +171,48 @@ namespace ProductsService.Core.Services
 
             return products;
         }
+
+        public async Task<PagedResult<ProductResponse>> GetProductsAsync(ProductQueryParameters parameters)
+        {
+            if (parameters.MinPrice.HasValue && parameters.MaxPrice.HasValue && parameters.MinPrice.Value > parameters.MaxPrice.Value)
+            {
+                throw new BusinessValidationException("Minimum price cannot be greater than maximum price.");
+            }
+
+            if (parameters.MinPrice.HasValue && parameters.MinPrice.Value < 0)
+            {
+                throw new BusinessValidationException("Minimum price cannot be negative.");
+            }
+
+            if (parameters.MaxPrice.HasValue && parameters.MaxPrice.Value < 0)
+            {
+                throw new BusinessValidationException("Maximum price cannot be negative.");
+            }
+
+            if (parameters.MinRating.HasValue && (parameters.MinRating.Value < 0 || parameters.MinRating.Value > 5))
+            {
+                throw new BusinessValidationException("Minimum rating must be between 0 and 5.");
+            }
+
+            parameters.Page = parameters.Page > 0 ? (parameters.Page > 50 ? 50 : parameters.Page) : 1;
+            parameters.Limit = parameters.Limit > 0 ? (parameters.Limit > 100 ? 100 : parameters.Limit) : 12;
+
+            var (products, totalCount) = await _productRepository.GetProductsAsync(parameters);
+
+            List<ProductResponse> mappedItems = _mapper.Map<List<Product>, List<ProductResponse>>(products);
+
+            foreach (ProductResponse item in mappedItems)
+            {
+                item.ProductImagePath = _imageService.GetImageUrl(BlobContainers.ProductImages, item.ProductImagePath);
+            }
+
+            return new PagedResult<ProductResponse>
+            {
+                Items = mappedItems,
+                TotalCount = totalCount,
+                Page = parameters.Page,
+                Limit = parameters.Limit
+            };
+        }
     }
 }

@@ -152,9 +152,15 @@ namespace ProductsService.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CategoryId");
-
                     b.HasIndex("Name");
+
+                    b.HasIndex("CategoryId", "IsActive");
+
+                    b.HasIndex("IsActive", "CreatedAt");
+
+                    b.HasIndex("IsActive", "UnitPrice");
+
+                    b.HasIndex("IsActive", "AverageRating", "TotalRatings");
 
                     b.ToTable("Products", (string)null);
                 });

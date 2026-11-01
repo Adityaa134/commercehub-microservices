@@ -16,6 +16,14 @@ namespace ProductsMicroService.API.Controllers
             _productService = productService;
         }
 
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<ActionResult<PagedResult<ProductResponse>>> GetProducts([FromQuery] ProductQueryParameters parameters)
+        {
+            PagedResult<ProductResponse> result = await _productService.GetProductsAsync(parameters);
+            return Ok(result);
+        }
+
         [HttpGet("{productId:guid}")]
         [AllowAnonymous]
         public async Task<ActionResult<ProductResponse>> GetProductById(Guid productId)

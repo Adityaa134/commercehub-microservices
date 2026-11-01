@@ -11,5 +11,6 @@ namespace ProductsService.Core.ServiceContracts
         Task<ProductResponse> UpdateProductAsync(Guid productId, ProductUpdateRequest request);
         Task<ProductResponse> UpdateProductStatusAsync(Guid productId, bool isActive);
         Task<bool> IsProductExistAsync(Guid productId);
+        Task<PagedResult<ProductResponse>> GetProductsAsync(ProductQueryParameters parameters);
     }
 }
