@@ -66,9 +66,9 @@
       "RateLimitOptions": {
         "ClientWhitelist": [],
         "EnableRateLimiting": true,
-        "Period": "1m",
-        "PeriodTimespan": 60,
-        "Limit": 3
+        "Period": "30s",
+        "PeriodTimespan": 30,
+        "Limit": 1
       }
     },
     {
@@ -81,9 +81,9 @@
       "RateLimitOptions": {
         "ClientWhitelist": [],
         "EnableRateLimiting": true,
-        "Period": "1m",
-        "PeriodTimespan": 60,
-        "Limit": 3
+        "Period": "30s",
+        "PeriodTimespan": 30,
+        "Limit": 1
       }
     },
     {
@@ -96,9 +96,9 @@
       "RateLimitOptions": {
         "ClientWhitelist": [],
         "EnableRateLimiting": true,
-        "Period": "1m",
-        "PeriodTimespan": 60,
-        "Limit": 5
+        "Period": "30s",
+        "PeriodTimespan": 30,
+        "Limit": 1
       }
     },
     {
@@ -198,6 +198,27 @@
       }
     },
     {
+      "UpstreamPathTemplate": "/api/products",
+      "DownstreamPathTemplate": "/api/Product",
+      "DownstreamHostAndPorts": [ { "Host": "products-service", "Port": 8080 } ],
+      "UpstreamHttpMethod": [ "Get" ],
+      "UpstreamScheme": "http",
+      "RouteIsCaseSensitive": false,
+      "Priority": 2,
+      "RateLimitOptions": {
+        "ClientWhitelist": [],
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 60
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 10000,
+        "TimeoutValue": 5000
+      }
+    },
+    {
       "UpstreamPathTemplate": "/api/products/{productId}",
       "DownstreamPathTemplate": "/api/Product/{productId}",
       "DownstreamHostAndPorts": [ { "Host": "products-service", "Port": 8080 } ],
@@ -205,7 +226,6 @@
       "UpstreamScheme": "http",
       "RouteIsCaseSensitive": false,
       "Priority": 1,
-      "FileCacheOptions": { "TtlSeconds": 30 },
       "QoSOptions": {
         "ExceptionsAllowedBeforeBreaking": 3,
         "DurationOfBreak": 10000,
