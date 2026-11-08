@@ -18,6 +18,15 @@ namespace UsersMicroservice.API.Controllers
             _configuration = configuration;
         }
 
+        [Authorize]
+        [HttpGet("me")]
+        public async Task<ActionResult<UserProfileResponse>> GetCurrentUser()
+        {
+            Guid userId = GetUserId();
+            UserProfileResponse response = await _authService.GetUserProfileAsync(userId);
+            return Ok(response);
+        }
+
         [HttpPost("register")]
         public async Task<ActionResult<RegisterResponse>> Register(RegisterRequest registerRequest)
         {

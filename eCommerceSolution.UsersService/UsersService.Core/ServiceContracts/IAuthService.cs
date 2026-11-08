@@ -12,5 +12,6 @@ namespace UsersService.Core.ServiceContracts
         Task ResendEmailConfirmationLinkAsync(EmailRequest emailRequest);
         Task SendForgotPasswordEmailAsync(EmailRequest emailRequest);
         Task ResetPasswordAsync(ResetPasswordRequest resetPasswordRequest);
+        Task<UserProfileResponse> GetUserProfileAsync(Guid userId);
     }
 }

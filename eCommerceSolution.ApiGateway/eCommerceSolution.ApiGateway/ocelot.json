@@ -33,6 +33,14 @@
       }
     },
     {
+      "UpstreamPathTemplate": "/api/auth/me",
+      "DownstreamPathTemplate": "/api/Auth/me",
+      "DownstreamHostAndPorts": [ { "Host": "users-service", "Port": 8080 } ],
+      "UpstreamHttpMethod": [ "Get" ],
+      "UpstreamScheme": "http",
+      "RouteIsCaseSensitive": false
+    },
+    {
       "UpstreamPathTemplate": "/api/auth/refresh-token",
       "DownstreamPathTemplate": "/api/Auth/refresh-token",
       "DownstreamHostAndPorts": [ { "Host": "users-service", "Port": 8080 } ],

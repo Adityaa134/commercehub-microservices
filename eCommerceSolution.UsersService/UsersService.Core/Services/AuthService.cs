@@ -212,5 +212,18 @@ namespace UsersService.Core.Services
                 throw new BusinessValidationException(errors);
             }
         }
+
+        public async Task<UserProfileResponse> GetUserProfileAsync(Guid userId)
+        {
+            ApplicationUser? user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null)
+                throw new UnauthorizedOperationException("User not found.");
+
+            IList<string> roles = await _userManager.GetRolesAsync(user);
+            UserProfileResponse userProfile = _mapper.Map<ApplicationUser, UserProfileResponse>(user);
+            userProfile.Role = roles.FirstOrDefault() ?? string.Empty;
+
+            return userProfile;
+        }
     }
 }
