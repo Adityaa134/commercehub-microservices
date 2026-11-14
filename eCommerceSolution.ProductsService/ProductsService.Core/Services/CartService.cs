@@ -125,5 +125,43 @@ namespace ProductsService.Core.Services
 
             return true;
         }
+
+        public async Task<CartResponse> MergeCartAsync(Guid userId, List<CartItemAddRequest> cartItems)
+        {
+            if (cartItems == null || !cartItems.Any())
+            {
+                return await GetCartByUserIdAsync(userId);
+            }
+
+            Cart cart = await _cartRepository.GetOrCreateCartAsync(userId);
+
+            foreach (CartItemAddRequest cartItem in cartItems)
+            {
+                Product? product = await _productRepository.GetProductByIdAsync(cartItem.ProductId);
+                if (product == null || !product.IsActive) continue;
+
+                int maxAllowed = Math.Min(product.QuantityInStock, 5);
+                CartItem? existingItem = await _cartRepository.GetCartItemAsync(userId, cartItem.ProductId);
+
+                if (existingItem != null)
+                {
+                    int combinedQty = Math.Min(existingItem.Quantity + cartItem.Quantity, maxAllowed);
+                    await _cartRepository.UpdateCartItemQuantityAsync(existingItem, combinedQty);
+                }
+                else
+                {
+                    CartItem newItem = new CartItem
+                    {
+                        Id = Guid.NewGuid(),
+                        CartId = cart.Id,
+                        ProductId = product.Id,
+                        Quantity = Math.Min(cartItem.Quantity, maxAllowed)
+                    };
+                    await _cartRepository.AddCartItemAsync(newItem);
+                }
+            }
+
+            return await GetCartByUserIdAsync(userId);
+        }
     }
 }

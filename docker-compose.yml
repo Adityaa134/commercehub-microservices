@@ -1,13 +1,12 @@
 services:
   users-db:
-    image: postgres:latest
+    image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: users-db
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
     volumes:
-      - users_db_data:/var/lib/postgresql
+      - users_db_data:/var/opt/mssql
     networks:
       - users-service-network
 
@@ -36,6 +35,8 @@ services:
   seq:
     image: datalust/seq:latest
     container_name: seq
+    init: true
+    stop_grace_period: 30s
     environment:
       ACCEPT_EULA: "Y"
       SEQ_FIRSTRUN_ADMINPASSWORD: ${SEQ_ADMIN_PASSWORD}
@@ -54,7 +55,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_HTTP_PORTS=8080
-      - ConnectionStrings__DefaultConnection=Host=users-db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      - ConnectionStrings__DefaultConnection=Server=users-db,1433;Database=${USERS_DB};User Id=${USER_ID};Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;
       - Jwt__SecurityKey=${JWT_SECURITY_KEY}
       - Jwt__Issuer=${JWT_ISSUER}
       - Jwt__Audience=${JWT_AUDIENCE}

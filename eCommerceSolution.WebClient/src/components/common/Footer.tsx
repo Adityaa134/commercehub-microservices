@@ -1,36 +1,12 @@
-import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import Logo from './Logo';
-import categoryService from '../../services/categoryService';
-import { CategoryResponse } from '../../types/category.types';
+import { RootState } from '../../store';
 
 export function Footer() {
-  const [categories, setCategories] = useState<CategoryResponse[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    let isMounted = true;
-    const fetchCategories = async () => {
-      try {
-        const data = await categoryService.getCategories();
-        if (isMounted) {
-          const parentCategories = data.filter((c) => !c.parentCategoryId);
-          setCategories(parentCategories);
-        }
-      } catch (error) {
-        console.error('Failed to load footer categories', error);
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-    fetchCategories();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  const categories = useSelector((state: RootState) => state.categories.items);
+  const parentCategories = categories.filter((c) => !c.parentCategoryId);
+  const isLoading = categories.length === 0;
 
   return (
     <footer className="bg-[#0e1015] text-neutral-400 text-sm border-t border-neutral-800/60">
@@ -89,7 +65,7 @@ export function Footer() {
                   <li className="h-4 w-16 bg-neutral-800/60 rounded animate-pulse" />
                 </>
               ) : (
-                categories.map((cat) => (
+                parentCategories.map((cat) => (
                   <li key={cat.categoryId}>
                     <Link
                       to={`/?categoryId=${cat.categoryId}`}

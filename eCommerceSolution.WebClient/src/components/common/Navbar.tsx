@@ -3,26 +3,21 @@ import { Link } from 'react-router-dom';
 import SearchBar from './SearchBar';
 import Logo from './Logo';
 import { Button } from './Button';
-import categoryService from '../../services/categoryService';
-import { CategoryResponse } from '../../types/category.types';
+import authService from '../../services/authService';
 import { CategoryDropdown, CategoryIcon } from '../categories/CategoryDropdown';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../../store';
+import { logout } from '../../store/slices/authSlice';
+import { clearWishlist } from '../../store/slices/wishlistSlice';
 
-export interface UserNavProfile {
-  name: string;
-  email: string;
-  avatarUrl?: string;
-}
+export function Navbar() {
+  const dispatch = useDispatch();
+  const user = useSelector((state: RootState) => state.auth.user);
+  const categories = useSelector((state: RootState) => state.categories.items);
+  const totalCartItems = useSelector((state: RootState) => state.cart.totalItems);
+  const wishlistProductIds = useSelector((state: RootState) => state.wishlist.productIds);
+  const totalWishlistItems = user ? wishlistProductIds.length : 0;
 
-export interface NavbarProps {
-  user?: UserNavProfile | null;
-  onLogout?: () => void;
-}
-
-export function Navbar({
-  user,
-  onLogout,
-}: NavbarProps) {
-  const [categories, setCategories] = useState<CategoryResponse[]>([]);
   const [isShopOpen, setIsShopOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -32,18 +27,16 @@ export function Navbar({
   const userMenuRef = useRef<HTMLDivElement>(null);
   const hoverTimeoutRef = useRef<number | null>(null);
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const data = await categoryService.getCategories();
-        setCategories(data);
-      } catch (error) {
-        console.error('Failed to load categories', error);
-      }
-    };
-
-    fetchCategories();
-  }, []);
+  const handleLogout = async () => {
+    setIsUserMenuOpen(false);
+    setIsMobileMenuOpen(false);
+    try {
+      await authService.logout();
+    } catch {
+    }
+    dispatch(logout());
+    dispatch(clearWishlist());
+  };
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -169,7 +162,7 @@ export function Navbar({
                 >
                   {user ? (
                     <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-600 font-bold text-xs flex items-center justify-center">
-                      {getInitials(user.name)}
+                      {getInitials(user.fullName)}
                     </div>
                   ) : (
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
@@ -212,14 +205,14 @@ export function Navbar({
                       <div className="text-left">
                         <div className="flex items-center gap-3 p-4 sm:p-5">
                           <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 font-bold text-sm flex items-center justify-center flex-shrink-0">
-                            {getInitials(user.name)}
+                            {getInitials(user.fullName)}
                           </div>
                           <div className="min-w-0 flex-1">
                             <p className="font-semibold text-neutral-900 text-sm truncate">
-                              {user.name}
+                              {user.fullName}
                             </p>
                             <p className="text-xs text-neutral-500 truncate mt-0.5">
-                              {user.email}
+                              {user.role}
                             </p>
                           </div>
                         </div>
@@ -238,16 +231,23 @@ export function Navbar({
                             <span>My orders</span>
                           </a>
 
-                          <a
-                            href="#wishlist"
+                          <Link
+                            to="/wishlist"
                             onClick={() => setIsUserMenuOpen(false)}
-                            className="flex items-center gap-3 px-5 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
+                            className="flex items-center justify-between px-5 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
                           >
-                            <svg className="w-4 h-4 text-neutral-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
-                            </svg>
-                            <span>Wishlist</span>
-                          </a>
+                            <div className="flex items-center gap-3">
+                              <svg className="w-4 h-4 text-neutral-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                              </svg>
+                              <span>Wishlist</span>
+                            </div>
+                            {totalWishlistItems > 0 && (
+                              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-neutral-100 text-[#16181C]">
+                                {totalWishlistItems}
+                              </span>
+                            )}
+                          </Link>
 
                           <a
                             href="#settings"
@@ -266,10 +266,7 @@ export function Navbar({
                         <div className="p-2 sm:p-3">
                           <Button
                             variant="none"
-                            onClick={() => {
-                              setIsUserMenuOpen(false);
-                              onLogout?.();
-                            }}
+                            onClick={handleLogout}
                             className="w-full flex items-center gap-3 px-3 py-2 text-sm text-[#e0583b] hover:bg-red-50/60 rounded-xl transition-colors text-left font-medium"
                           >
                             <svg className="w-4 h-4 text-[#e0583b] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
@@ -284,25 +281,35 @@ export function Navbar({
                 )}
               </div>
 
-              <a
-                href="#wishlist"
+              <Link
+                to={user ? '/wishlist' : '/login?redirect=/wishlist'}
                 aria-label="Wishlist"
-                className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-neutral-100 hover:text-neutral-900 transition-colors"
+                className="relative w-9 h-9 flex items-center justify-center rounded-lg hover:bg-neutral-100 hover:text-neutral-900 transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
                 </svg>
-              </a>
+                {totalWishlistItems > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#16181C] text-white text-[10.5px] font-bold flex items-center justify-center leading-none pointer-events-none select-none">
+                    {totalWishlistItems > 99 ? '99+' : totalWishlistItems}
+                  </span>
+                )}
+              </Link>
 
-              <a
-                href="#cart"
+              <Link
+                to="/cart"
                 aria-label="Shopping Cart"
-                className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-neutral-100 hover:text-neutral-900 transition-colors"
+                className="relative w-9 h-9 flex items-center justify-center rounded-lg hover:bg-neutral-100 hover:text-neutral-900 transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
                 </svg>
-              </a>
+                {totalCartItems > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#16181C] text-white text-[10.5px] font-bold flex items-center justify-center leading-none pointer-events-none select-none">
+                    {totalCartItems > 99 ? '99+' : totalCartItems}
+                  </span>
+                )}
+              </Link>
             </div>
         </div>
 
@@ -339,11 +346,11 @@ export function Navbar({
               <div className="p-4 border-b border-neutral-100 bg-neutral-50/70">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 font-bold text-sm flex items-center justify-center flex-shrink-0">
-                    {getInitials(user.name)}
+                    {getInitials(user.fullName)}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-neutral-900 text-sm truncate">{user.name}</p>
-                    <p className="text-xs text-neutral-500 truncate mt-0.5">{user.email}</p>
+                    <p className="font-semibold text-neutral-900 text-sm truncate">{user.fullName}</p>
+                    <p className="text-xs text-neutral-500 truncate mt-0.5">{user.role}</p>
                   </div>
                 </div>
               </div>
@@ -410,6 +417,18 @@ export function Navbar({
                 >
                   Trending
                 </Link>
+                <Link
+                  to={user ? '/wishlist' : '/login?redirect=/wishlist'}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center justify-between text-sm font-semibold text-neutral-900 hover:text-blue-600 transition-colors"
+                >
+                  <span>Wishlist</span>
+                  {totalWishlistItems > 0 && (
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-neutral-100 text-[#16181C]">
+                      {totalWishlistItems}
+                    </span>
+                  )}
+                </Link>
               </div>
             </div>
 
@@ -434,10 +453,7 @@ export function Navbar({
               <div className="p-4 border-t border-neutral-100 mt-auto">
                 <Button
                   variant="none"
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
-                    onLogout?.();
-                  }}
+                  onClick={handleLogout}
                   className="w-full flex items-center justify-center gap-2 text-sm text-[#e0583b] font-semibold py-2.5 rounded-xl border border-red-200 hover:bg-red-50 transition-colors"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">

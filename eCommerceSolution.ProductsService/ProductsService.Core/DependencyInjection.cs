@@ -1,4 +1,4 @@
-﻿using Azure.Storage.Blobs;
+using Azure.Storage.Blobs;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ProductsService.Core.Mappers;
@@ -15,6 +15,7 @@ namespace ProductsService.Core
             services.AddScoped<ICategoryService, CategoryService>();
             services.AddScoped<IProductService, ProductService>();
             services.AddScoped<IImageService,ImageService>();
+            services.AddScoped<IWishlistService, WishlistService>();
 
             services.AddAutoMapper(cfg=> { }, typeof(ProductMappingProfile).Assembly);
 

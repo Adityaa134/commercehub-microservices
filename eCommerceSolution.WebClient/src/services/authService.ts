@@ -20,6 +20,11 @@ export const authService = {
     return response.data;
   },
 
+  getMe: async (): Promise<UserProfileResponse> => {
+    const response = await axiosInstance.get<UserProfileResponse>('/api/auth/me');
+    return response.data;
+  },
+
   refreshToken: async (): Promise<UserProfileResponse> => {
     const response = await axiosInstance.post<UserProfileResponse>('/api/auth/refresh-token');
     return response.data;

@@ -17,3 +17,6 @@ export * from './products/ProductGrid';
 export * from './products/ProductSearch';
 export * from './products/TrendingGrid';
 export * from './categories/CategoryDropdown';
+export * from './cart/Cart';
+export * from './wishlist/Wishlist';
+export * from './wishlist/WishlistCard';

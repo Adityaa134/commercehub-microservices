@@ -17,7 +17,7 @@ namespace UsersService.Infrastructure
         {
             services.AddDbContext<ApplicationDbContext>(options =>
             {
-                options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"));
+                options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
             });
 
             services.AddIdentity<ApplicationUser, ApplicationRole>(options =>

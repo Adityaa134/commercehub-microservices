@@ -1,5 +1,26 @@
 import { useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState } from '../../store';
+import { addItem, updateQuantity, removeItem } from '../../store/slices/cartSlice';
+import { toggleWishlistId } from '../../store/slices/wishlistSlice';
+import cartService from '../../services/cartService';
+import wishlistService from '../../services/wishlistService';
 import { ProductResponse } from '../../types/product.types';
+import {
+  CartItemAddRequest,
+  CartItemUpdateRequest,
+  CartItemResponse,
+} from '../../types/cart.types';
+import Button from '../common/Button';
+
+const GUEST_CART_STORAGE_KEY = 'commercehub_guest_cart';
+const MAX_ITEM_LIMIT = 5;
+
+function saveGuestCart(items: CartItemResponse[]): void {
+  try {
+    localStorage.setItem(GUEST_CART_STORAGE_KEY, JSON.stringify(items));
+  } catch {}
+}
 
 interface ProductCardProps {
   product: ProductResponse;
@@ -14,11 +35,27 @@ export function ProductCard({
   rank,
   onAddToCart,
   onToggleWishlist,
-  isWishlisted = false,
+  isWishlisted: propIsWishlisted,
 }: ProductCardProps) {
+  const dispatch = useDispatch();
+
+  const cartItems = useSelector((state: RootState) => state.cart.items);
+  const isCartInitialized = useSelector((state: RootState) => state.cart.isInitialized);
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+  const wishlistIds = useSelector((state: RootState) => state.wishlist.productIds);
+
   const [hover, setHover] = useState(false);
-  const [wished, setWished] = useState(isWishlisted);
   const [imageError, setImageError] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const isWishlisted = propIsWishlisted !== undefined ? propIsWishlisted : wishlistIds.includes(product.productId);
+
+  const cartItem = cartItems.find((item) => item.productId === product.productId);
+  const quantity = cartItem?.quantity || 0;
+  const isInCart = quantity > 0;
+
+  const maxAllowedQuantity = Math.min(product.quantityInStock ?? MAX_ITEM_LIMIT, MAX_ITEM_LIMIT);
+  const isMaxReached = quantity >= maxAllowedQuantity;
 
   const isProductNew = (() => {
     if (!product.createdAt) return false;
@@ -28,16 +65,101 @@ export function ProductCard({
     return Date.now() - createdTime <= thirtyDaysMs;
   })();
 
-  const handleWishlistClick = (e: React.MouseEvent) => {
+  const handleWishlistClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    const nextState = !wished;
-    setWished(nextState);
+    dispatch(toggleWishlistId(product.productId));
     onToggleWishlist?.(product.productId);
+    try {
+      await wishlistService.toggleWishlist(product.productId);
+    } catch (err) {
+      dispatch(toggleWishlistId(product.productId));
+      console.error('Failed to toggle wishlist:', err);
+    }
   };
 
-  const handleAddToCartClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onAddToCart?.(product);
+  const handleRemove = async () => {
+    setIsUpdating(true);
+    try {
+      if (isAuthenticated) {
+        await cartService.removeItemFromCart(product.productId);
+        dispatch(removeItem(product.productId));
+      } else {
+        dispatch(removeItem(product.productId));
+        saveGuestCart(cartItems.filter((i) => i.productId !== product.productId));
+      }
+    } catch (err) {
+      console.error('Failed to remove item:', err);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleUpdateQuantity = async (newQuantity: number) => {
+    if (newQuantity <= 0) {
+      return handleRemove();
+    }
+    if (newQuantity > maxAllowedQuantity) {
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      if (isAuthenticated) {
+        const updateRequest: CartItemUpdateRequest = {
+          productId: product.productId,
+          quantity: newQuantity,
+        };
+        const updatedItem: CartItemResponse = await cartService.updateCartItemQuantity(updateRequest);
+        dispatch(updateQuantity(updatedItem));
+      } else {
+        const updatedItem: CartItemResponse = {
+          productId: product.productId,
+          productName: product.productName,
+          productImagePath: product.productImagePath || null,
+          quantity: newQuantity,
+          unitPrice: product.unitPrice,
+          totalPrice: Math.round(newQuantity * product.unitPrice * 100) / 100,
+        };
+        dispatch(updateQuantity(updatedItem));
+        saveGuestCart(
+          cartItems.map((i) => (i.productId === product.productId ? updatedItem : i))
+        );
+      }
+    } catch (err) {
+      console.error('Failed to update quantity:', err);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleAddToCart = async () => {
+    setIsUpdating(true);
+    try {
+      if (isAuthenticated) {
+        const addRequest: CartItemAddRequest = {
+          productId: product.productId,
+          quantity: 1,
+        };
+        const res: CartItemResponse = await cartService.addItemToCart(addRequest);
+        dispatch(addItem(res));
+      } else {
+        const newItem: CartItemResponse = {
+          productId: product.productId,
+          productName: product.productName,
+          productImagePath: product.productImagePath || null,
+          quantity: 1,
+          unitPrice: product.unitPrice,
+          totalPrice: product.unitPrice,
+        };
+        dispatch(addItem(newItem));
+        saveGuestCart([...cartItems, newItem]);
+      }
+      onAddToCart?.(product);
+    } catch (err) {
+      console.error('Failed to add to cart:', err);
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   return (
@@ -76,36 +198,102 @@ export function ProductCard({
           )
         )}
 
-        <button
-          type="button"
-          onClick={handleWishlistClick}
-          aria-label={wished ? 'Remove from wishlist' : 'Save to wishlist'}
-          className="absolute top-1.5 right-1.5 sm:top-2.5 sm:right-2.5 w-6 h-6 sm:w-[30px] sm:h-[30px] rounded-full border-none bg-white/92 backdrop-blur-xs flex items-center justify-center cursor-pointer shadow-2xs hover:scale-105 transition-transform z-10"
-        >
-          <svg
-            className="w-3 h-3 sm:w-3.5 sm:h-3.5"
-            viewBox="0 0 24 24"
-            fill={wished ? '#FF8A3D' : 'none'}
-            stroke={wished ? '#FF8A3D' : '#16181C'}
-            strokeWidth="2"
+        {isAuthenticated && (
+          <button
+            type="button"
+            onClick={handleWishlistClick}
+            aria-label={isWishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
+            className="absolute top-1.5 right-1.5 sm:top-2.5 sm:right-2.5 w-6 h-6 sm:w-[30px] sm:h-[30px] rounded-full border-none bg-white/92 backdrop-blur-xs flex items-center justify-center cursor-pointer shadow-2xs hover:scale-105 transition-transform z-10"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
-            />
-          </svg>
-        </button>
+            <svg
+              className="w-3 h-3 sm:w-3.5 sm:h-3.5"
+              viewBox="0 0 24 24"
+              fill={isWishlisted ? '#16181C' : 'none'}
+              stroke="#16181C"
+              strokeWidth="2"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
+              />
+            </svg>
+          </button>
+        )}
 
-        <button
-          type="button"
-          onClick={handleAddToCartClick}
-          className={`absolute left-1.5 right-1.5 sm:left-2.5 sm:right-2.5 h-8 sm:h-9 rounded-[7px] sm:rounded-[9px] border-none bg-[#3355FF] hover:bg-[#2544DD] text-white text-[11.5px] sm:text-[13px] font-semibold cursor-pointer transition-all duration-200 z-10 shadow-sm flex items-center justify-center ${
-            hover ? 'bottom-1.5 sm:bottom-2.5 opacity-100' : '-bottom-11 opacity-0'
+        <div
+          className={`absolute left-2 sm:left-2.5 right-2 sm:right-2.5 z-10 transition-all duration-200 ${
+            isInCart
+              ? 'bottom-2 sm:bottom-2.5 opacity-100'
+              : hover
+              ? 'bottom-2 sm:bottom-2.5 opacity-100'
+              : '-bottom-12 opacity-0 pointer-events-none'
           }`}
         >
-          Add to cart
-        </button>
+          {!isCartInitialized ? (
+            <div className="w-full h-8 sm:h-9 rounded-[8px] sm:rounded-[10px] bg-neutral-300/80 animate-pulse" />
+          ) : isInCart ? (
+            <div className="w-full h-8 sm:h-9 rounded-[8px] sm:rounded-[10px] bg-[#3355FF] text-white flex items-center justify-between px-1.5 sm:px-2 shadow-sm select-none">
+              <Button
+                variant="none"
+                disabled={isUpdating}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleUpdateQuantity(quantity - 1);
+                }}
+                aria-label="Decrease quantity"
+                className="w-6 h-6 sm:w-7 sm:h-7 p-0 flex items-center justify-center text-white/90 hover:text-white hover:bg-white/15 rounded-md transition-colors text-sm font-bold disabled:opacity-50"
+              >
+                —
+              </Button>
+
+              <span className="text-[11px] sm:text-[12.5px] font-semibold text-white truncate px-1">
+                {quantity} in cart
+              </span>
+
+              <Button
+                variant="none"
+                disabled={isUpdating || isMaxReached}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleUpdateQuantity(quantity + 1);
+                }}
+                aria-label="Increase quantity"
+                className="w-6 h-6 sm:w-7 sm:h-7 p-0 flex items-center justify-center text-white/90 hover:text-white hover:bg-white/15 rounded-md transition-colors text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                +
+              </Button>
+            </div>
+          ) : (
+            <Button
+              variant="none"
+              isLoading={isUpdating}
+              disabled={isUpdating}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleAddToCart();
+              }}
+              className="w-full h-8 sm:h-9 rounded-[8px] sm:rounded-[10px] bg-[#3355FF] hover:bg-[#2544DD] text-white text-[11.5px] sm:text-[13px] font-semibold flex items-center justify-center gap-1.5 sm:gap-2 shadow-sm transition-colors disabled:opacity-60 cursor-pointer"
+            >
+              {!isUpdating && (
+                <svg
+                  className="w-3.5 h-3.5 sm:w-4 sm:h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"
+                  />
+                </svg>
+              )}
+              <span>Add to cart</span>
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="p-2 sm:p-3 flex flex-col gap-0.5 flex-1">
@@ -132,10 +320,16 @@ export function ProductCard({
           ))}
         </div>
 
-        <div className="flex items-baseline gap-2 mt-auto pt-1">
+        <div className="flex items-baseline justify-between mt-auto pt-1">
           <span className="text-[13px] sm:text-[14.5px] font-bold text-[#16181C]">
             ₹{product.unitPrice.toLocaleString('en-IN')}
           </span>
+
+          {isMaxReached && (
+            <span className="text-[10px] sm:text-[11px] font-bold text-[#E0583B]">
+              Max {maxAllowedQuantity}
+            </span>
+          )}
         </div>
       </div>
     </div>

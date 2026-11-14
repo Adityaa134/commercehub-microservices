@@ -46,5 +46,13 @@ namespace ProductsMicroService.API.Controllers
             await _cartService.RemoveItemFromCartAsync(userId, productId);
             return NoContent();
         }
+
+        [HttpPost("merge")]
+        public async Task<ActionResult<CartResponse>> MergeCart([FromBody] List<CartItemAddRequest> cartItems)
+        {
+            Guid userId = GetUserId();
+            CartResponse cartResponse = await _cartService.MergeCartAsync(userId, cartItems);
+            return Ok(cartResponse);
+        }
     }
 }

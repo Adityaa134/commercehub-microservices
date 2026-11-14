@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ProductsService.Core.Domain.RepositoryContracts;
@@ -19,6 +19,7 @@ namespace ProductsService.Infrastructure
             services.AddScoped<ICartRepository, CartRepository>();
             services.AddScoped<IProductRepository,ProductRepository>();
             services.AddScoped<ICategoryRepository, CategoryRepository>();
+            services.AddScoped<IWishlistRepository, WishlistRepository>();
 
             return services;
         }

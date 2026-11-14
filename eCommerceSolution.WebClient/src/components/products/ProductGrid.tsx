@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import productService from '../../services/productService';
-import { PagedResult, ProductResponse, SORT_OPTIONS } from '../../types/product.types';
+import { useGetProductsQuery } from '../../store/slices/productApiSlice';
+import { ProductResponse, SORT_OPTIONS } from '../../types/product.types';
 import { ProductCard } from './ProductCard';
 import { Pagination } from '../common/Pagination';
 
@@ -12,47 +12,19 @@ export function ProductGrid() {
   const search = searchParams.get('search') || undefined;
   const categoryId = searchParams.get('category') || searchParams.get('categoryId') || undefined;
 
-  const [data, setData] = useState<PagedResult<ProductResponse> | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data, isLoading } = useGetProductsQuery({
+    page,
+    limit: 12,
+    sortBy,
+    search,
+    categoryId,
+  });
+
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [addedNotice, setAddedNotice] = useState<string | null>(null);
 
   const currentSortLabel =
     SORT_OPTIONS.find((s) => s.id === sortBy)?.label || 'Featured';
-
-  useEffect(() => {
-    let isCurrent = true;
-
-    async function loadProducts() {
-      setIsLoading(true);
-      try {
-        const result = await productService.getProducts({
-          page,
-          limit: 12,
-          sortBy,
-          search,
-          categoryId,
-        });
-        if (isCurrent) {
-          setData(result);
-        }
-      } catch {
-        if (isCurrent) {
-          setData(null);
-        }
-      } finally {
-        if (isCurrent) {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    loadProducts();
-
-    return () => {
-      isCurrent = false;
-    };
-  }, [page, sortBy, search, categoryId]);
 
   const handlePageChange = (newPage: number) => {
     const next = new URLSearchParams(searchParams);

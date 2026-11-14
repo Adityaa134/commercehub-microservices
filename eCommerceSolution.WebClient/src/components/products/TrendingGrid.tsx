@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import productService from '../../services/productService';
-import { PagedResult, ProductResponse } from '../../types/product.types';
+import { useGetProductsQuery } from '../../store/slices/productApiSlice';
+import { ProductResponse } from '../../types/product.types';
 import { ProductCard } from './ProductCard';
 import { Pagination } from '../common/Pagination';
 
@@ -9,41 +9,13 @@ export function TrendingGrid() {
   const [searchParams, setSearchParams] = useSearchParams();
   const page = Number(searchParams.get('page')) || 1;
 
-  const [data, setData] = useState<PagedResult<ProductResponse> | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data, isLoading } = useGetProductsQuery({
+    page,
+    limit: 12,
+    sortBy: 'rating',
+  });
+
   const [addedNotice, setAddedNotice] = useState<string | null>(null);
-
-  useEffect(() => {
-    let isCurrent = true;
-
-    async function loadTrending() {
-      setIsLoading(true);
-      try {
-        const result = await productService.getProducts({
-          page,
-          limit: 12,
-          sortBy: 'rating',
-        });
-        if (isCurrent) {
-          setData(result);
-        }
-      } catch {
-        if (isCurrent) {
-          setData(null);
-        }
-      } finally {
-        if (isCurrent) {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    loadTrending();
-
-    return () => {
-      isCurrent = false;
-    };
-  }, [page]);
 
   const handlePageChange = (newPage: number) => {
     setSearchParams({ page: String(newPage) });

@@ -14,6 +14,7 @@ namespace ProductsService.Infrastructure.DBContext
         public DbSet<Cart> Carts { get; set; }
         public DbSet<CartItem> CartItems { get; set; }
         public DbSet<Rating> Ratings { get; set; }
+        public DbSet<WishlistItem> WishlistItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -62,6 +63,17 @@ namespace ProductsService.Infrastructure.DBContext
                 rating.ToTable("Ratings");
                 rating.HasIndex(r => new { r.OrderId , r.ProductId})
                       .IsUnique();
+            });
+
+            modelBuilder.Entity<WishlistItem>(wishlistItem =>
+            {
+                wishlistItem.ToTable("WishlistItems");
+                wishlistItem.HasIndex(w => new { w.UserId, w.ProductId })
+                            .IsUnique();
+                wishlistItem.HasOne(w => w.Product)
+                            .WithMany(p => p.WishlistItems)
+                            .HasForeignKey(w => w.ProductId)
+                            .OnDelete(DeleteBehavior.Cascade);
             });
         }
     }

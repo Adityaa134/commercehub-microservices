@@ -32,5 +32,6 @@ namespace ProductsService.Core.Domain.Entities
 
         public ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
         public ICollection<Rating> Ratings { get; set; } = new List<Rating>();
+        public ICollection<WishlistItem> WishlistItems { get; set; } = new List<WishlistItem>();
     }
 }

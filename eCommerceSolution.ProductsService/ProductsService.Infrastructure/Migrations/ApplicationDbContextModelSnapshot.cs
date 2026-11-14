@@ -198,6 +198,31 @@ namespace ProductsService.Infrastructure.Migrations
                     b.ToTable("Ratings", (string)null);
                 });
 
+            modelBuilder.Entity("ProductsService.Core.Domain.Entities.WishlistItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("AddedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("UserId", "ProductId")
+                        .IsUnique();
+
+                    b.ToTable("WishlistItems", (string)null);
+                });
+
             modelBuilder.Entity("ProductsService.Core.Domain.Entities.CartItem", b =>
                 {
                     b.HasOne("ProductsService.Core.Domain.Entities.Cart", "Cart")
@@ -249,6 +274,17 @@ namespace ProductsService.Infrastructure.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("ProductsService.Core.Domain.Entities.WishlistItem", b =>
+                {
+                    b.HasOne("ProductsService.Core.Domain.Entities.Product", "Product")
+                        .WithMany("WishlistItems")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+                });
+
             modelBuilder.Entity("ProductsService.Core.Domain.Entities.Cart", b =>
                 {
                     b.Navigation("CartItems");
@@ -266,6 +302,8 @@ namespace ProductsService.Infrastructure.Migrations
                     b.Navigation("CartItems");
 
                     b.Navigation("Ratings");
+
+                    b.Navigation("WishlistItems");
                 });
 #pragma warning restore 612, 618
         }

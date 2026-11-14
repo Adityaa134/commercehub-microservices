@@ -5,3 +5,5 @@ export * from './auth/VerifyEmailPage';
 export * from './auth/ConfirmEmailPage';
 export * from './products/ProductsPage';
 export * from './products/TrendingPage';
+export * from './cart/CartPage';
+export * from './wishlist/WishlistPage';

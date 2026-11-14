@@ -420,6 +420,76 @@
         "TimeoutValue": 5000
       }
     },
+    {
+      "UpstreamPathTemplate": "/api/cart/merge",
+      "DownstreamPathTemplate": "/api/Cart/merge",
+      "DownstreamHostAndPorts": [ { "Host": "products-service", "Port": 8080 } ],
+      "UpstreamHttpMethod": [ "Post" ],
+      "UpstreamScheme": "http",
+      "RouteIsCaseSensitive": false,
+      "Priority": 2,
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 10000,
+        "TimeoutValue": 5000
+      }
+    },
+    {
+      "UpstreamPathTemplate": "/api/wishlist/ids",
+      "DownstreamPathTemplate": "/api/Wishlist/ids",
+      "DownstreamHostAndPorts": [ { "Host": "products-service", "Port": 8080 } ],
+      "UpstreamHttpMethod": [ "Get" ],
+      "UpstreamScheme": "http",
+      "RouteIsCaseSensitive": false,
+      "Priority": 2,
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 10000,
+        "TimeoutValue": 5000
+      }
+    },
+    {
+      "UpstreamPathTemplate": "/api/wishlist/toggle/{productId}",
+      "DownstreamPathTemplate": "/api/Wishlist/toggle/{productId}",
+      "DownstreamHostAndPorts": [ { "Host": "products-service", "Port": 8080 } ],
+      "UpstreamHttpMethod": [ "Post" ],
+      "UpstreamScheme": "http",
+      "RouteIsCaseSensitive": false,
+      "Priority": 2,
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 10000,
+        "TimeoutValue": 5000
+      }
+    },
+    {
+      "UpstreamPathTemplate": "/api/wishlist/{productId}",
+      "DownstreamPathTemplate": "/api/Wishlist/{productId}",
+      "DownstreamHostAndPorts": [ { "Host": "products-service", "Port": 8080 } ],
+      "UpstreamHttpMethod": [ "Delete" ],
+      "UpstreamScheme": "http",
+      "RouteIsCaseSensitive": false,
+      "Priority": 2,
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 10000,
+        "TimeoutValue": 5000
+      }
+    },
+    {
+      "UpstreamPathTemplate": "/api/wishlist",
+      "DownstreamPathTemplate": "/api/Wishlist",
+      "DownstreamHostAndPorts": [ { "Host": "products-service", "Port": 8080 } ],
+      "UpstreamHttpMethod": [ "Get" ],
+      "UpstreamScheme": "http",
+      "RouteIsCaseSensitive": false,
+      "Priority": 1,
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 10000,
+        "TimeoutValue": 5000
+      }
+    },
 
     // Orders Microservice
     {

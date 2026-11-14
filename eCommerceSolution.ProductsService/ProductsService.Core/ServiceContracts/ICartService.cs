@@ -8,5 +8,6 @@ namespace ProductsService.Core.ServiceContracts
         Task<CartItemResponse> AddItemToCartAsync(Guid userId, CartItemAddRequest request);
         Task<CartItemResponse> UpdateCartItemQuantityAsync(Guid userId, CartItemUpdateRequest request);
         Task<bool> RemoveItemFromCartAsync(Guid userId, Guid productId);
+        Task<CartResponse> MergeCartAsync(Guid userId, List<CartItemAddRequest> cartItems);
     }
 }

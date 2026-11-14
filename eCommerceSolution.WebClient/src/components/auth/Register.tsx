@@ -13,6 +13,8 @@ export function Register() {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [termsError, setTermsError] = useState('');
 
+  const redirectUrl = new URLSearchParams(window.location.search).get('redirect');
+
   const {
     register,
     handleSubmit,
@@ -98,7 +100,7 @@ export function Register() {
 
     try {
       await authService.register(data);
-      navigate('/verify-email', { state: { email: data.email } });
+      navigate('/verify-email', { state: { email: data.email, redirect: redirectUrl } });
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
         const axiosError = err as { response?: { data?: { message?: string } } };
@@ -426,7 +428,7 @@ export function Register() {
       <p className="mt-8 text-center text-sm text-neutral-500 font-medium">
         Already have an account?{' '}
         <Link
-          to="/login"
+          to={redirectUrl ? `/login?redirect=${encodeURIComponent(redirectUrl)}` : '/login'}
           className="font-semibold text-blue-600 hover:text-blue-500 transition-colors cursor-pointer"
         >
           Sign in

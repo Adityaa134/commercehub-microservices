@@ -5,10 +5,18 @@ import { Input } from '../common/Input';
 import { Button } from '../common/Button';
 import { LoginRequest } from '../../types/user.types';
 import authService from '../../services/authService';
+import cartService from '../../services/cartService';
+import { useDispatch } from 'react-redux';
+import { setUser } from '../../store/slices/authSlice';
+import { setCart } from '../../store/slices/cartSlice';
+import { CartItemResponse, CartItemAddRequest } from '../../types/cart.types';
 
 export function Login() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [showPassword, setShowPassword] = useState(false);
+
+  const redirectUrl = new URLSearchParams(window.location.search).get('redirect');
 
   const {
     register,
@@ -24,8 +32,26 @@ export function Login() {
 
   const onSubmit = async (data: LoginRequest) => {
     try {
-      await authService.login(data);
-      navigate('/');
+      const user = await authService.login(data);
+
+      const raw = localStorage.getItem('commercehub_guest_cart');
+      const guestItems: CartItemResponse[] = raw ? JSON.parse(raw) : [];
+
+      if (guestItems.length > 0) {
+        const mergePayload: CartItemAddRequest[] = guestItems.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+        }));
+        const mergedCart = await cartService.mergeCart(mergePayload);
+        dispatch(setCart(mergedCart));
+        localStorage.removeItem('commercehub_guest_cart');
+      } else {
+        const userCart = await cartService.getCart();
+        dispatch(setCart(userCart));
+      }
+
+      dispatch(setUser(user));
+      navigate(redirectUrl || '/');
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
         const axiosError = err as { response?: { data?: { message?: string } } };
@@ -191,7 +217,7 @@ export function Login() {
       <p className="mt-8 text-center text-sm text-neutral-500 font-medium">
         Don&apos;t have an account?{' '}
         <Link
-          to="/register"
+          to={redirectUrl ? `/register?redirect=${encodeURIComponent(redirectUrl)}` : '/register'}
           className="font-semibold text-blue-600 hover:text-blue-500 transition-colors cursor-pointer"
         >
           Sign up

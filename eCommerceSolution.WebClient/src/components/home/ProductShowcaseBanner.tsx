@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '../common/Button';
-import productService from '../../services/productService';
-import { ProductResponse } from '../../types/product.types';
+import { useGetProductsQuery } from '../../store/slices/productApiSlice';
 
 export interface ProductShowcaseBannerProps {
   onShopNewArrivals?: () => void;
@@ -12,8 +11,11 @@ export function ProductShowcaseBanner({
   onShopNewArrivals,
   onExploreAll,
 }: ProductShowcaseBannerProps) {
-  const [products, setProducts] = useState<ProductResponse[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data, isLoading } = useGetProductsQuery({
+    sortBy: 'trending',
+    limit: 4,
+  });
+  const products = data?.items || [];
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [imgScale, setImgScale] = useState<number>(1.2);
@@ -32,33 +34,6 @@ export function ProductShowcaseBanner({
       setImgScale(1.15);
     }
   };
-
-  useEffect(() => {
-    let isMounted = true;
-    const fetchTrendingProducts = async () => {
-      try {
-        const data = await productService.getProducts({
-          sortBy: 'trending',
-          limit: 4,
-        });
-        if (isMounted && data.items && data.items.length > 0) {
-          setProducts(data.items);
-        }
-      } catch (error) {
-        console.error('Failed to load banner products', error);
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    fetchTrendingProducts();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   useEffect(() => {
     if (isPaused || products.length <= 1) {

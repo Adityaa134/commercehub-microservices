@@ -1,9 +1,11 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
+import { Provider } from 'react-redux';
+import { store } from './store';
 import './index.css';
 import App from './App';
-import { ProductsPage, TrendingPage, LoginPage, RegisterPage, ForgotPasswordPage, VerifyEmailPage, ConfirmEmailPage } from './pages';
+import { ProductsPage, TrendingPage, LoginPage, RegisterPage, ForgotPasswordPage, VerifyEmailPage, ConfirmEmailPage, CartPage, WishlistPage } from './pages';
 
 const router = createBrowserRouter([
   {
@@ -21,6 +23,14 @@ const router = createBrowserRouter([
       {
         path: 'trending',
         element: <TrendingPage />,
+      },
+      {
+        path: 'cart',
+        element: <CartPage />,
+      },
+      {
+        path: 'wishlist',
+        element: <WishlistPage />,
       },
       {
         path: 'login',
@@ -52,6 +62,8 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <Provider store={store}>
+      <RouterProvider router={router} />
+    </Provider>
   </StrictMode>
 );
